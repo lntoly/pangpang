@@ -1,5 +1,5 @@
 # pangpang
-High performance web server and application server for c++ and php
+High performance web server and application server for c++
 
 ## wiki
 [wiki](https://github.com/webcpp/pangpang/wiki)
