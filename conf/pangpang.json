@@ -30,7 +30,6 @@
     "log": true,
     "temp_directory": "temp",
     "route": [{
-            "application_type": "cpp",
             "pattern": "hello",
             "max_match_size": 0,
             "module": "mod/hello.so",
@@ -46,7 +45,6 @@
             "log": false
         },
         {
-            "application_type": "cpp",
             "pattern": "form",
             "max_match_size": 30,
             "module": "mod/form.so",
@@ -62,7 +60,6 @@
             "log": false
         },
         {
-            "application_type": "cpp",
             "pattern": "session",
             "max_match_size": 0,
             "module": "mod/session.so",
@@ -76,22 +73,6 @@
             "cookie": true,
             "gzip": false,
             "log": true
-        },
-        {
-            "application_type": "php",
-            "pattern": "php",
-            "max_match_size": 30,
-            "module": "",
-            "cache": {
-                "enable": false,
-                "expires": 300,
-                "size": 30
-            },
-            "session": true,
-            "header": true,
-            "cookie": true,
-            "gzip": false,
-            "log": false
         }
     ],
     "static_server": {

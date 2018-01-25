@@ -11,9 +11,9 @@ COBJ=$(patsubst %.c,%.o,$(CSRC))
 
 OBJ=$(COBJ) $(CXXOBJ) $(CCOBJ) $(CPPOBJ)
 
-CFLAGS=-std=c11 -O3 -Wall -Isrc/inc -Isrc/lib `php-config --includes`
-CXXFLAGS=-std=c++11 -O3 -Wall -Isrc/inc -Isrc/lib -Isrc/lib/MPFDParser-1.1.1 `pkg-config --cflags hiredis libevent_openssl openssl` `php-config --includes`
-LDLIBS=`pkg-config --libs hiredis libevent_openssl openssl` -lphp7 -lpcre -lz -lpthread -ldl -lstdc++ 
+CFLAGS=-std=c11 -O3 -Wall -Isrc/inc -Isrc/lib 
+CXXFLAGS=-std=c++11 -O3 -Wall -Isrc/inc -Isrc/lib -Isrc/lib/MPFDParser-1.1.1 `pkg-config --cflags hiredis libevent_openssl openssl` 
+LDLIBS=`pkg-config --libs hiredis libevent_openssl openssl`  -lpcre -lz -lpthread -ldl -lstdc++ 
 
 PREFIX=/usr/local/pangpang
 
@@ -47,12 +47,10 @@ install:
 	test -d $(PREFIX)/conf || mkdir -p $(PREFIX)/conf
 	test -d $(PREFIX)/mod || mkdir -p $(PREFIX)/mod
 	test -d $(PREFIX)/temp || mkdir -p $(PREFIX)/temp
-	cp -R php $(PREFIX)/
 	cp src/inc/*.hpp $(PREFIX)/include
 	install bin/pangpang $(PREFIX)/bin
 	install --backup conf/pangpang.json $(PREFIX)/conf
 	install --backup conf/pattern.conf $(PREFIX)/conf
 	install --backup conf/zlog.conf $(PREFIX)/conf
 	install --backup html/index.html $(PREFIX)/html
-	install html/phpdemo.html $(PREFIX)/html
 	cp systemctl/pangpang.service /etc/systemd/system

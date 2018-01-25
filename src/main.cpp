@@ -17,7 +17,6 @@ static inline void signal_normal_cb(int sig);
 static inline void generic_request_handler(struct evhttp_request *req, void *arg);
 
 static inline void request_cpp_handler(std::shared_ptr<pangpang::route_ele_t>& rtt, hi::request& req, hi::response& res);
-static inline void request_php_handler(std::shared_ptr<pangpang::route_ele_t>& rtt, hi::request& req, hi::response& res);
 
 static inline void *my_zeroing_malloc(size_t howmuch);
 static inline void ssl_setup();
@@ -176,17 +175,7 @@ static inline bool initailize_config(const std::string& path) {
                         tmp->log = item["log"].bool_value();
                         tmp->max_match_size = static_cast<size_t> (item["max_match_size"].int_value());
                         if (tmp->session&&!tmp->cookie)tmp->cookie = true;
-                        std::string app_t = item["application_type"].string_value();
-                        if (app_t == "cpp") {
-                            tmp->app_t = pangpang::application_t::__cpp__;
-                        } else if (app_t == "php") {
-                            tmp->app_t = pangpang::application_t::__php__;
-                            int argc = 1;
-                            char *argv[2] = {"", NULL};
-                            PANGPANG_CONFIG.PHP = std::move(std::make_shared<php::VM>(argc, argv));
-                        } else {
-                            tmp->app_t = pangpang::application_t::__unkown__;
-                        }
+
                         PANGPANG_CONFIG.PLUGIN.push_back(std::move(tmp));
                     }
                 }
@@ -497,15 +486,8 @@ static inline void generic_request_handler(struct evhttp_request *ev_req, void *
             }
         }
 
-        if (item->app_t == pangpang::application_t::__cpp__) {
-            request_cpp_handler(item, req, res);
-        } else if (item->app_t == pangpang::application_t::__php__) {
-            request_php_handler(item, req, res);
-        } else {
-            res.content = std::move("<p style='text-align:center;margin:100px;'>501 Not Implemented</p>");
-            res.status = 501;
-            goto done;
-        }
+        request_cpp_handler(item, req, res);
+
 
         bool gziped = false;
         size_t content_len = res.content.size();
@@ -810,81 +792,3 @@ static inline void request_cpp_handler(std::shared_ptr<pangpang::route_ele_t>& r
     }
 }
 
-static inline void request_php_handler(std::shared_ptr<pangpang::route_ele_t>& rtt, hi::request& req, hi::response& res) {
-    std::string script = std::move(PHP_DIRECTORY + req.uri);
-    if (is_file(script)) {
-        zend_first_try
-                {
-            PANGPANG_CONFIG.PHP->include(script.c_str());
-            const char *request = "\\hi\\request", *response = "\\hi\\response", *handler = "handler";
-            php::Object php_req = php::newObject(request), php_res = php::newObject(response);
-
-            if (!php_req.isNull() && !php_res.isNull()) {
-
-                php_req.set("client", php::Variant(req.client));
-                php_req.set("method", php::Variant(req.method));
-                php_req.set("user_agent", php::Variant(req.user_agent));
-                php_req.set("param", php::Variant(req.param));
-                php_req.set("uri", php::Variant(req.uri));
-
-                php::Array php_req_headers, php_req_form, php_req_cookies, php_req_session;
-                for (auto & i : req.headers) {
-                    php_req_headers.set(i.first.c_str(), php::Variant(i.second));
-                }
-                for (auto & i : req.form) {
-                    php_req_form.set(i.first.c_str(), php::Variant(i.second));
-                }
-                for (auto & i : req.cookies) {
-                    php_req_cookies.set(i.first.c_str(), php::Variant(i.second));
-                }
-                for (auto & i : req.session) {
-                    php_req_session.set(i.first.c_str(), php::Variant(i.second));
-                }
-                php_req.set("headers", php_req_headers);
-                php_req.set("form", php_req_form);
-                php_req.set("cookies", php_req_cookies);
-                php_req.set("session", php_req_session);
-
-
-
-
-                auto p = req.uri.find_last_of('/'), q = req.uri.find_last_of('.');
-
-                std::string class_name = std::move(req.uri.substr(p + 1, q - 1 - p));
-
-
-                php::Object servlet = php::newObject(class_name.c_str());
-
-
-                if (!servlet.isNull() && servlet.methodExists(handler)) {
-                    servlet.exec(handler, php_req, php_res);
-                    php::Array res_headers = php_res.get("headers"), res_session = php_res.get("session");
-
-
-                    for (auto i = res_headers.begin(); i != res_headers.end(); i++) {
-                        auto v = i.value();
-                        if (v.isArray()) {
-                            php::Array arr(v);
-                            for (size_t j = 0; j < arr.count(); j++) {
-                                res.headers.insert(std::move(std::make_pair(i.key().toString(), arr[j].toString())));
-                            }
-                        } else {
-                            res.headers.insert(std::move(std::make_pair(i.key().toString(), i.value().toString())));
-                        }
-                    }
-                    for (auto i = res_session.begin(); i != res_session.end(); i++) {
-                        res.session.insert(std::move(std::make_pair(i.key().toString(), i.value().toString())));
-                    }
-
-
-
-                    res.content = std::move(php_res.get("content").toString());
-
-                    res.status = std::move(php_res.get("status")).toInt();
-                    return;
-                }
-            }}zend_catch{
-            res.content = std::move(fmt::format("<p style='text-align:center;margin:100px;'>{}</p>", "PHP Throw Exception"));
-            res.status = 500;}zend_end_try();
-    }
-}
