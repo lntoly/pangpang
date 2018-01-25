@@ -235,7 +235,6 @@ see `conf/pangpang.json` and `conf/pattern.conf`
 hello       =       ^/hello/?([0-9a-z]?)?$
 form        =       ^/form/?([0-9a-z]+)?$
 session     =       ^/session$
-php         =       \.php$
 
 ```
 
