@@ -36,7 +36,7 @@ MPFD::Parser::~Parser() {
     }
 
     if (DataCollector) {
-        delete DataCollector;
+        delete[] DataCollector;
     }
 }
 
@@ -147,7 +147,7 @@ bool MPFD::Parser::WaitForHeadersEndAndParseThem() {
 
             TruncateDataCollectorFromTheBeginning(i + 4);
 
-            delete headers;
+            delete[] headers;
 
             return true;
         }
@@ -235,7 +235,7 @@ void MPFD::Parser::TruncateDataCollectorFromTheBeginning(long n) {
 
     DataCollectorLength = TruncatedDataCollectorLength;
 
-    delete tmp;
+    //delete tmp;
 
 }
 
